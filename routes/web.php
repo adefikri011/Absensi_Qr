@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,7 +10,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return view('employee.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -18,7 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::post('/process-scan', [\App\Http\Controllers\AttendanceController::class, 'processScan'])
+Route::post('/process-scan', [AttendanceController::class, 'processScan'])
     ->middleware('auth');
 
 Route::middleware(['auth'])->group(function () {
@@ -33,6 +34,22 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee/dashboard', function () {
         return view('employee.dashboard');
     })->name('employee.dashboard');
+});
+
+Route::get('/employee/history', function () {
+    $attendances = \App\Models\Attendance::where('user_id', auth()->id())
+        ->latest()
+        ->get();
+
+    return view('employee.history', compact('attendances'));
+})->middleware('auth');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/employee/leave', [LeaveController::class, 'index'])
+        ->name('leave.index');
+
+    Route::post('/employee/leave', [LeaveController::class, 'store'])
+        ->name('leave.store');
 });
 
 Route::get('/qr-monitor', [AttendanceController::class, 'showQrGenerator'])

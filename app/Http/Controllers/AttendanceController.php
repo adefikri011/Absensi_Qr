@@ -8,6 +8,8 @@ use App\Models\QrToken;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Setting;
+
 
 class AttendanceController extends Controller
 {
@@ -49,21 +51,54 @@ class AttendanceController extends Controller
             ->where('expires_at', '>=', now())
             ->first();
 
-        if (!$qr) {
+        if (! $qr) {
             return response()->json([
-                'message' => 'QR tidak valid atau sudah kadaluarsa.'
+                'message' => 'QR tidak valid atau sudah kadaluarsa ❌'
             ], 400);
         }
 
-        Attendance::create([
-            'user_id' => Auth::id(),
-            'date' => now()->toDateString(),
-            'time_in' => now()->toTimeString(),
-            'status' => 'Hadir',
-        ]);
+        $user = Auth::user();
+        $today = now()->toDateString();
+
+        $setting = Setting::first();
+
+        $attendance = Attendance::where('user_id', $user->id)
+            ->where('date', $today)
+            ->first();
+
+        if (! $attendance) {
+
+            $status = 'Hadir';
+
+            if (now()->format('H:i:s') > $setting->late_tolerance) {
+                $status = 'Terlambat';
+            }
+
+            Attendance::create([
+                'user_id' => $user->id,
+                'date' => $today,
+                'time_in' => now()->toTimeString(),
+                'status' => $status,
+            ]);
+
+            return response()->json([
+                'message' => 'Check-in berhasil ✅ (' . $status . ')'
+            ]);
+        }
+
+        if ($attendance->time_out === null) {
+
+            $attendance->update([
+                'time_out' => now()->toTimeString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Check-out berhasil '
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Absensi berhasil dicatat.'
-        ]);
+            'message' => 'Anda sudah melakukan absensi hari ini'
+        ], 400);
     }
 }
