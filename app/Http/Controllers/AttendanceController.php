@@ -53,7 +53,7 @@ class AttendanceController extends Controller
 
         if (! $qr) {
             return response()->json([
-                'message' => 'QR tidak valid atau sudah kadaluarsa ❌'
+                'message' => 'QR tidak valid atau sudah kadaluarsa '
             ], 400);
         }
 
@@ -82,7 +82,7 @@ class AttendanceController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Check-in berhasil ✅ (' . $status . ')'
+                'message' => 'Check-in berhasil (' . $status . ')'
             ]);
         }
 
