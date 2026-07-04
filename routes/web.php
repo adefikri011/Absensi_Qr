@@ -62,5 +62,7 @@ Route::get('/qr-monitor', [AttendanceController::class, 'showQrGenerator'])
     ->name('qr.monitor');
 Route::get('/generate-qr', [AttendanceController::class, 'generateNewToken'])
     ->name('generate.qr');
+Route::post('/process-early-checkout', [\App\Http\Controllers\AttendanceController::class, 'processEarlyCheckout'])
+    ->middleware('auth');
 
 require __DIR__ . '/auth.php';

@@ -12,8 +12,10 @@ class Attendance extends Model
         'time_in',
         'time_out',
         'status',
+        'early_checkout_reason',
+        'early_checkout_status',
+        'time_out_requested',
     ];
-
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -22,15 +22,21 @@ class SettingResource extends Resource
         return $form->schema([
             Forms\Components\TimePicker::make('work_start')
                 ->label('Jam Masuk')
-                ->required(),
+                ->required()
+                ->seconds(false)
+                ->displayFormat('H:i'),
 
             Forms\Components\TimePicker::make('late_tolerance')
                 ->label('Batas Toleransi Terlambat')
-                ->required(),
+                ->required()
+                ->seconds(false)
+                ->displayFormat('H:i'),
 
             Forms\Components\TimePicker::make('work_end')
                 ->label('Jam Pulang')
-                ->required(),
+                ->required()
+                ->seconds(false)
+                ->displayFormat('H:i'),
         ]);
     }
 
