@@ -1,67 +1,176 @@
-<nav class="fixed bottom-0 left-0 right-0 bg-white 
-            border-t border-slate-100 shadow-lg z-50">
-    <div class="flex justify-around items-center py-2">
+@php
+    $pendingLeave = auth()->user()
+        ->leaveRequests()
+        ->where('status', 'pending')
+        ->count();
+@endphp
 
-        {{-- Dashboard --}}
-        <a href="/employee/dashboard"
-            class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl
-                  {{ request()->is('employee/dashboard') ? 'text-indigo-600' : 'text-slate-400' }}
-                  hover:text-indigo-600 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <span class="text-xs font-medium">Home</span>
-        </a>
+<nav class="fixed bottom-0 left-0 right-0 z-50">
 
-        {{-- Scan QR --}}
-        <a href="/scan" class="flex flex-col items-center gap-1 px-4 py-2">
-            <div
-                class="w-12 h-12 bg-indigo-600 rounded-2xl 
-                        flex items-center justify-center shadow-lg
-                        hover:bg-indigo-700 transition -mt-5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                    <path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3" />
+    <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md
+                border-t border-slate-200 dark:border-slate-800
+                shadow-[0_-6px_30px_rgba(0,0,0,0.08)]">
+
+        {{-- Floating Scan Button --}}
+        <div class="absolute left-1/2 -translate-x-1/2 -top-7 z-20">
+
+            <a href="/scan"
+               class="relative flex items-center justify-center
+                      w-16 h-16 rounded-full
+                      bg-gradient-to-br from-indigo-500 to-indigo-700
+                      shadow-xl shadow-indigo-300/40
+                      ring-4 ring-white dark:ring-slate-900
+                      transition-transform duration-150
+                      hover:scale-105 active:scale-95">
+
+                {{-- Pulse effect --}}
+                <span class="absolute inset-0 rounded-full
+                             bg-indigo-400 opacity-20 animate-ping"></span>
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="w-7 h-7 text-white relative z-10"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
                 </svg>
-            </div>
-            <span class="text-xs font-medium text-indigo-600">Scan</span>
-        </a>
+            </a>
 
-        {{-- Riwayat --}}
-        <a href="/employee/history"
-            class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl
-                  {{ request()->is('employee/history') ? 'text-indigo-600' : 'text-slate-400' }}
-                  hover:text-indigo-600 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-            </svg>
-            <span class="text-xs font-medium">Riwayat</span>
-        </a>
+            <span class="block text-center text-[10px] font-semibold
+                         text-indigo-600 mt-1">
+                Scan
+            </span>
+        </div>
 
-        {{-- Izin --}}
-        <a href="/employee/leave"
-            class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl
-          {{ request()->is('employee/leave') ? 'text-indigo-600' : 'text-slate-400' }}
-          hover:text-indigo-600 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="12" y1="18" x2="12" y2="12" />
-                <line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
-            <span class="text-xs font-medium">Izin</span>
-        </a>
+
+        {{-- Navigation Grid --}}
+        <div class="grid grid-cols-5 items-end
+                    max-w-md mx-auto
+                    px-3 pt-3 pb-3
+                    pb-[env(safe-area-inset-bottom,12px)]">
+
+            {{-- HOME --}}
+            <a href="/employee/dashboard"
+               class="relative flex flex-col items-center gap-1 py-2 text-xs
+               {{ request()->is('employee/dashboard')
+                    ? 'text-indigo-600'
+                    : 'text-slate-400 hover:text-indigo-500' }}
+               transition-all duration-150 active:scale-95">
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="w-5 h-5"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <path d="M3 10.5 12 3l9 7.5"/>
+                    <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/>
+                </svg>
+
+                <span>Home</span>
+
+                @if(request()->is('employee/dashboard'))
+                    <span class="absolute -bottom-1 w-5 h-1 bg-indigo-600 rounded-full"></span>
+                @endif
+            </a>
+
+
+            {{-- RIWAYAT --}}
+            <a href="/employee/history"
+               class="relative flex flex-col items-center gap-1 py-2 text-xs
+               {{ request()->is('employee/history')
+                    ? 'text-indigo-600'
+                    : 'text-slate-400 hover:text-indigo-500' }}
+               transition-all duration-150 active:scale-95">
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="w-5 h-5"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <circle cx="12" cy="12" r="8.5"/>
+                    <path d="M12 7.5V12l3 2"/>
+                </svg>
+
+                <span>Riwayat</span>
+
+                @if(request()->is('employee/history'))
+                    <span class="absolute -bottom-1 w-5 h-1 bg-indigo-600 rounded-full"></span>
+                @endif
+            </a>
+
+
+            {{-- GAP --}}
+            <div></div>
+
+
+            {{-- IZIN --}}
+            <a href="/employee/leave"
+               class="relative flex flex-col items-center gap-1 py-2 text-xs
+               {{ request()->is('employee/leave')
+                    ? 'text-indigo-600'
+                    : 'text-slate-400 hover:text-indigo-500' }}
+               transition-all duration-150 active:scale-95">
+
+                <div class="relative">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-5 h-5"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8">
+                        <rect x="4" y="4.5" width="16" height="15" rx="2.5"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                    </svg>
+
+                    @if($pendingLeave > 0)
+                        <span class="absolute -top-1 -right-2
+                                     bg-red-500 text-white text-[9px]
+                                     w-4 h-4 flex items-center justify-center
+                                     rounded-full">
+                            {{ $pendingLeave }}
+                        </span>
+                    @endif
+                </div>
+
+                <span>Izin</span>
+
+                @if(request()->is('employee/leave'))
+                    <span class="absolute -bottom-1 w-5 h-1 bg-indigo-600 rounded-full"></span>
+                @endif
+            </a>
+
+
+            {{-- PROFIL --}}
+            <a href="/employee/profile"
+               class="relative flex flex-col items-center gap-1 py-2 text-xs
+               {{ request()->is('employee/profile')
+                    ? 'text-indigo-600'
+                    : 'text-slate-400 hover:text-indigo-500' }}
+               transition-all duration-150 active:scale-95">
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="w-5 h-5"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <circle cx="12" cy="8" r="3.5"/>
+                    <path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>
+                </svg>
+
+                <span>Profil</span>
+
+                @if(request()->is('employee/profile'))
+                    <span class="absolute -bottom-1 w-5 h-1 bg-indigo-600 rounded-full"></span>
+                @endif
+            </a>
+
+        </div>
 
     </div>
 </nav>

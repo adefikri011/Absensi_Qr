@@ -34,6 +34,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee/dashboard', function () {
         return view('employee.dashboard');
     })->name('employee.dashboard');
+
+    Route::get('/employee/profile', [\App\Http\Controllers\ProfileController::class, 'index'])
+        ->name('employee.profile');
+
+    Route::post('/employee/profile', [\App\Http\Controllers\ProfileController::class, 'update'])
+        ->name('employee.profile.update');
 });
 
 Route::get('/employee/history', function () {
