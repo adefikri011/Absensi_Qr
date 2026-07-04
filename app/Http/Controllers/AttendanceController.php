@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use Illuminate\Support\Str;
 use App\Models\QrToken;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
@@ -36,5 +39,31 @@ class AttendanceController extends Controller
         return response($qrCode)
             ->header('Content-Type', 'image/svg+xml')
             ->header('Cache-Control', 'no-cache, no-store');
+    }
+
+    public function processScan(Request $request)
+    {
+        $token = $request->token;
+
+        $qr = QrToken::where('token', $token)
+            ->where('expires_at', '>=', now())
+            ->first();
+
+        if (!$qr) {
+            return response()->json([
+                'message' => 'QR tidak valid atau sudah kadaluarsa.'
+            ], 400);
+        }
+
+        Attendance::create([
+            'user_id' => Auth::id(),
+            'date' => now()->toDateString(),
+            'time_in' => now()->toTimeString(),
+            'status' => 'Hadir',
+        ]);
+
+        return response()->json([
+            'message' => 'Absensi berhasil dicatat.'
+        ]);
     }
 }
