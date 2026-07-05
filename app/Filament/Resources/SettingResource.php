@@ -37,6 +37,53 @@ class SettingResource extends Resource
                 ->required()
                 ->seconds(false)
                 ->displayFormat('H:i'),
+
+            Forms\Components\Section::make('Pengaturan Jam Kerja')
+                ->schema([
+                    Forms\Components\TimePicker::make('work_start')
+                        ->label('Jam Masuk')
+                        ->required()
+                        ->seconds(false)
+                        ->displayFormat('H:i'),
+
+                    Forms\Components\TimePicker::make('late_tolerance')
+                        ->label('Batas Toleransi Terlambat')
+                        ->required()
+                        ->seconds(false)
+                        ->displayFormat('H:i'),
+
+                    Forms\Components\TimePicker::make('work_end')
+                        ->label('Jam Pulang')
+                        ->required()
+                        ->seconds(false)
+                        ->displayFormat('H:i'),
+                ])
+                ->columns(3),
+
+            Forms\Components\Section::make('Pengaturan Lokasi Kantor')
+                ->description('Atur koordinat dan radius lokasi absensi')
+                ->schema([
+                    Forms\Components\TextInput::make('latitude')
+                        ->label('Latitude')
+                        ->placeholder('-6.200000')
+                        ->numeric()
+                        ->required(),
+
+                    Forms\Components\TextInput::make('longitude')
+                        ->label('Longitude')
+                        ->placeholder('106.816666')
+                        ->numeric()
+                        ->required(),
+
+                    Forms\Components\TextInput::make('radius')
+                        ->label('Radius (meter)')
+                        ->numeric()
+                        ->default(100)
+                        ->required()
+                        ->suffix('meter')
+                        ->helperText('Jarak maksimal karyawan dari kantor untuk bisa absen'),
+                ])
+                ->columns(3),
         ]);
     }
 

@@ -64,6 +64,64 @@ class AttendanceController extends Controller
             ], 500);
         }
 
+        // ✅ ANTI FAKE GPS DETECTION
+        if ($setting->latitude && $setting->longitude) {
+            $userLat = $request->latitude;
+            $userLon = $request->longitude;
+            $accuracy = $request->accuracy;
+            $altitude = $request->altitude;
+            $speed = $request->speed;
+            $isMocked = $request->is_mocked;
+
+            // Cek koordinat ada
+            if (! $userLat || ! $userLon) {
+                return response()->json([
+                    'success' => false,
+                    'type' => 'location_required',
+                    'message' => 'Izin lokasi diperlukan untuk absen ❌',
+                ], 403);
+            }
+
+            // Layer 1: Mock location flag dari browser
+            if ($isMocked === true || $isMocked === 'true') {
+                return response()->json([
+                    'success' => false,
+                    'type' => 'fake_gps',
+                    'message' => 'Terdeteksi lokasi palsu (Mock GPS) ❌',
+                ], 403);
+            }
+
+            // Layer 2: Accuracy terlalu sempurna
+            // GPS asli biasanya > 5 meter
+            if ($accuracy !== null && (float) $accuracy < 5) {
+                return response()->json([
+                    'success' => false,
+                    'type' => 'fake_gps',
+                    'message' => 'Terdeteksi lokasi tidak valid ❌ Nonaktifkan aplikasi fake GPS.',
+                ], 403);
+            }
+
+            // Layer 3: Cek jarak dari kantor
+            $distance = $this->calculateDistance(
+                (float) $setting->latitude,
+                (float) $setting->longitude,
+                (float) $userLat,
+                (float) $userLon
+            );
+
+            $radius = $setting->radius ?? 100;
+
+            if ($distance > $radius) {
+                return response()->json([
+                    'success' => false,
+                    'type' => 'out_of_range',
+                    'message' => "Kamu di luar area kantor ❌ (Jarak: " . round($distance) . "m, Radius: {$radius}m)",
+                    'distance' => round($distance),
+                    'radius' => $radius,
+                ], 403);
+            }
+        }
+
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $today)
             ->first();
@@ -73,7 +131,6 @@ class AttendanceController extends Controller
             $now = now();
             $nowTime = $now->format('H:i:s');
 
-            // Parse menggunakan Carbon agar perbandingan akurat
             $workStart = Carbon::createFromFormat('H:i:s', $setting->work_start);
             $lateTolerance = Carbon::createFromFormat('H:i:s', $setting->late_tolerance);
             $nowCarbon = Carbon::createFromFormat('H:i:s', $nowTime);
@@ -115,7 +172,6 @@ class AttendanceController extends Controller
             $workEnd = Carbon::createFromFormat('H:i:s', $setting->work_end);
             $nowCarbon = Carbon::createFromFormat('H:i:s', $nowTime);
 
-            // Belum waktunya pulang → Early checkout
             if ($nowCarbon->lt($workEnd)) {
                 return response()->json([
                     'success' => false,
@@ -143,7 +199,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'Kamu sudah melakukan absensi hari ini',
+            'message' => 'Kamu sudah absen lengkap hari ini ✅',
         ]);
     }
 
@@ -191,5 +247,25 @@ class AttendanceController extends Controller
             'success' => true,
             'message' => 'Pengajuan pulang cepat berhasil dikirim , Menunggu persetujuan admin.',
         ]);
+    }
+
+    private function calculateDistance(
+        float $lat1,
+        float $lon1,
+        float $lat2,
+        float $lon2
+    ): float {
+        $earthRadius = 6371000; // meter
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 }

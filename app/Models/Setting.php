@@ -10,5 +10,8 @@ class Setting extends Model
         'work_start',
         'late_tolerance',
         'work_end',
+        'latitude',
+        'longitude',
+        'radius',
     ];
 }
