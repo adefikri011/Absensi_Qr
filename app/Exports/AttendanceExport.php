@@ -4,73 +4,79 @@ namespace App\Exports;
 
 use App\Models\Attendance;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
 
-class AttendanceExport implements FromCollection, WithHeadings, WithMapping
+class AttendanceExport
 {
-    protected $period;
+    protected string $period;
 
-    public function __construct($period)
+    public function __construct(string $period)
     {
         $this->period = $period;
     }
 
-    public function collection()
+    public function getData()
     {
         $query = Attendance::with('user');
 
         switch ($this->period) {
 
+            case 'day':
+                // Hari ini
+                $query->whereDate('date', now()->toDateString());
+                break;
+
             case 'week':
+                // 7 hari terakhir
                 $query->whereBetween('date', [
-                    now()->startOfWeek(),
-                    now()->endOfWeek(),
+                    now()->subDays(6)->toDateString(),
+                    now()->toDateString(),
                 ]);
                 break;
 
             case 'month':
-                $query->whereMonth('date', now()->month)
-                      ->whereYear('date', now()->year);
+                // 30 hari terakhir
+                $query->whereBetween('date', [
+                    now()->subDays(29)->toDateString(),
+                    now()->toDateString(),
+                ]);
                 break;
 
             case 'year':
-                $query->whereYear('date', now()->year);
+                // 365 hari terakhir
+                $query->whereBetween('date', [
+                    now()->subDays(364)->toDateString(),
+                    now()->toDateString(),
+                ]);
                 break;
 
             case 'all':
             default:
-                // semua data
+                // Semua data
                 break;
         }
 
-        return $query->orderBy('date', 'desc')->get();
-    }
+        $data = $query->orderBy('date', 'desc')->get();
 
-    public function headings(): array
-    {
-        return [
-            'Nama Karyawan',
-            'Tanggal',
-            'Jam Masuk',
-            'Jam Pulang',
-            'Status',
-        ];
-    }
+        // ✅ MODE DETAIL (PER HARI)
+        if ($this->period === 'day') {
+            return $data;
+        }
 
-    public function map($attendance): array
-    {
-        return [
-            $attendance->user->name ?? '-',
-            Carbon::parse($attendance->date)->format('d-m-Y'),
-            $attendance->time_in
-                ? Carbon::parse($attendance->time_in)->format('H:i')
-                : '-',
-            $attendance->time_out
-                ? Carbon::parse($attendance->time_out)->format('H:i')
-                : '-',
-            $attendance->status,
-        ];
+        // ✅ MODE SUMMARY (GROUP PER KARYAWAN)
+        return $data
+            ->groupBy('user_id')
+            ->map(function ($items) {
+
+                $user = $items->first()->user;
+
+                return [
+                    'name' => $user->name ?? '-',
+                    'hadir' => $items->where('status', 'Hadir')->count(),
+                    'terlambat' => $items->where('status', 'Terlambat')->count(),
+                    'izin' => $items->where('status', 'Izin')->count(),
+                    'sakit' => $items->where('status', 'Sakit')->count(),
+                ];
+            })
+            ->values(); 
     }
 }

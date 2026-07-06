@@ -20,24 +20,6 @@ class SettingResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TimePicker::make('work_start')
-                ->label('Jam Masuk')
-                ->required()
-                ->seconds(false)
-                ->displayFormat('H:i'),
-
-            Forms\Components\TimePicker::make('late_tolerance')
-                ->label('Batas Toleransi Terlambat')
-                ->required()
-                ->seconds(false)
-                ->displayFormat('H:i'),
-
-            Forms\Components\TimePicker::make('work_end')
-                ->label('Jam Pulang')
-                ->required()
-                ->seconds(false)
-                ->displayFormat('H:i'),
-
             Forms\Components\Section::make('Pengaturan Jam Kerja')
                 ->schema([
                     Forms\Components\TimePicker::make('work_start')

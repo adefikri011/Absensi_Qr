@@ -16,6 +16,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\Section;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AttendanceExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendanceResource extends Resource
 {
@@ -212,28 +213,40 @@ class AttendanceResource extends Resource
             ])
 
             ->headerActions([
-                Tables\Actions\Action::make('export_excel')
-                    ->label('Export Excel')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('primary')
+                Tables\Actions\Action::make('export_pdf')
+                    ->label('Export PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('danger')
                     ->form([
                         Forms\Components\Select::make('period')
                             ->label('Periode')
                             ->options([
+                                'day' => 'Hari Ini',
                                 'all' => 'Semua Data',
                                 'week' => 'Minggu Ini',
                                 'month' => 'Bulan Ini',
                                 'year' => 'Tahun Ini',
+
                             ])
                             ->default('month')
                             ->required(),
                     ])
                     ->action(function (array $data) {
 
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Exports\AttendanceExport($data['period']),
-                            'laporan-absensi.xlsx'
-                        );
+                        $export = new \App\Exports\AttendanceExport($data['period']);
+
+                        return response()->streamDownload(function () use ($export, $data) {
+
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                                'exports.attendance-pdf',
+                                [
+                                    'attendances' => $export->getData(),
+                                    'period' => $data['period'],
+                                ]
+                            );
+
+                            echo $pdf->output();
+                        }, 'laporan-absensi.pdf');
                     }),
             ])
 
