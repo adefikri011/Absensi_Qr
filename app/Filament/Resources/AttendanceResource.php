@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\Section;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AttendanceExport;
 
 class AttendanceResource extends Resource
 {
@@ -208,6 +210,33 @@ class AttendanceResource extends Resource
                             );
                     }),
             ])
+
+            ->headerActions([
+                Tables\Actions\Action::make('export_excel')
+                    ->label('Export Excel')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\Select::make('period')
+                            ->label('Periode')
+                            ->options([
+                                'all' => 'Semua Data',
+                                'week' => 'Minggu Ini',
+                                'month' => 'Bulan Ini',
+                                'year' => 'Tahun Ini',
+                            ])
+                            ->default('month')
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\AttendanceExport($data['period']),
+                            'laporan-absensi.xlsx'
+                        );
+                    }),
+            ])
+
             ->actions([
                 Tables\Actions\Action::make('approve_early_checkout')
                     ->label('Approve')
